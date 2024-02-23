@@ -10,16 +10,18 @@
 #include <unistd.h> 
 
 int main(int argc, char **argv) {
-    int i;
+    int c = 0;
     int o_count = 0;
     int i_count = 0;
 
-    for (i = 0; i < argc; i++) {
-        if (strcmp(argv[i], "-o") == 0 && i+1 < argc && argv[i][0] != '-') {
-            o_count += 1;
-        }
-        else if (strcmp(argv[i], "-i") == 0 && i+1 < argc && argv[i][0] != '-') {
-            i_count += 1;
+    while ((c = getopt(argc, argv, "o:i:")) != -1) {
+        switch(c) {
+            case 'o':
+                o_count += 1;
+                break;
+            case 'i':
+                i_count += 1;
+                break;
         }
     }
 
