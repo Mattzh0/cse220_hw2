@@ -13,7 +13,9 @@ int main(int argc, char **argv) {
     int c = 0;
     int iflag = 0, oflag = 0, cflag = 0, pflag = 0, rflag = 0;
     FILE *input_file;
+    char input_path[256] = "";
     FILE *output_file;
+    char output_path[256] = "";
     FILE *font_file;
     int c_param_len = 0, p_param_len = 0, r_param_len = 0;
 
@@ -21,23 +23,29 @@ int main(int argc, char **argv) {
         switch(c) {
             case 'i':
                 if (optind + 1 == argc || optarg == NULL || (optarg && optarg[0] == '-')) {
+                    printf("Missing argument i");
                     return MISSING_ARGUMENT;
                 }
                 if (iflag) {
+                    printf("Duplicate argument i");
                     return DUPLICATE_ARGUMENT;
                 }
                 iflag = 1;
-                input_file = fopen(optarg, "r");
+                strcpy(input_path,optarg);
+                input_file = fopen(input_path, "r");
                 break;
             case 'o':
                 if (optind + 1 == argc || optarg == NULL || (optarg && optarg[0] == '-')) {
+                    printf("Missing argument o");
                     return MISSING_ARGUMENT;
                 }
                 if (oflag) {
+                    printf("Duplicate argument o");
                     return DUPLICATE_ARGUMENT;
                 }
                 oflag = 1;
-                output_file = fopen(optarg, "w");
+                strcpy(output_path,optarg);
+                output_file = fopen(output_path, "w");
                 break;
             case 'c':
                 if (optind + 1 == argc || optarg == NULL || (optarg && optarg[0] == '-')) {
@@ -100,6 +108,7 @@ int main(int argc, char **argv) {
         return MISSING_ARGUMENT;
     }
     if (input_file == NULL) {
+        printf("input file missing");
         return INPUT_FILE_MISSING;
     }
     if (output_file == NULL) {
@@ -117,5 +126,45 @@ int main(int argc, char **argv) {
     if (rflag && (font_file == NULL || r_param_len != 5)) {
         return R_ARGUMENT_INVALID;
     }
+
+    int input_ppm_flag = 0;
+    int input_sbu_flag = 0;
+    char *input_extension = strrchr(input_path, '.');
+    if (strcmp(input_extension, ".ppm") == 0) {
+        input_ppm_flag = 1;
+    } else if (strcmp(input_extension, ".sbu") == 0) {
+        input_sbu_flag = 1;
+    }
+
+    if (input_ppm_flag) {
+        char p3[3];
+        int width, height, color_num;
+        fscanf(input_file, "%s", p3);
+        fscanf(input_file, "%d %d", &width, &height);
+        fscanf(input_file, "%d", &color_num);
+
+        int *pixels = malloc(width * height * 3 * sizeof(int));
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                int red,green,blue;
+                fscanf(input_file, "%d %d %d", &red, &green, &blue);
+                pixels[(i * width + j) * 3] = red;
+                pixels[(i * width + j) * 3 + 1] = green;
+                pixels[(i * width + j) * 3 + 2] = blue;
+            }
+        }
+
+        free(pixels);
+    }
+
+    if (input_sbu_flag) {
+        char sbu[4];
+        int width, height;
+        fscanf(input_file, "%s", sbu);
+        fscanf(input_file, "%d %d", &width, &height);
+
+    }
+
     return 0;
 }
+
