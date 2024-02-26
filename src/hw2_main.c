@@ -9,6 +9,8 @@
 #include <string.h>
 #include <unistd.h> 
 
+int colortable_exists(int *table, int table_size, int r, int g, int b);
+
 int main(int argc, char **argv) {
     int c = 0;
     int iflag = 0, oflag = 0, cflag = 0, pflag = 0, rflag = 0;
@@ -176,6 +178,7 @@ int main(int argc, char **argv) {
 
         //store the ppm input pixel data in a 1d array
         int *pixels = malloc(width * height * 3 * sizeof(int));
+        int pixels_size = width*height*3;
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 int red,green,blue;
@@ -195,12 +198,19 @@ int main(int argc, char **argv) {
             if (cflag && pflag) {
                 for (int i = 0; i < copy_height; i++) {
                     for (int j = 0; j < copy_width; j++) {
-                        int src = ((copy_row + i) * width + (copy_col + j)) * 3;
-                        int dst = ((paste_row + i) * width + (paste_col + j)) * 3;
+                        int src_row = copy_row + i;
+                        int src_col = copy_col + j;
+                        int dst_row = paste_row + i;
+                        int dst_col = paste_col + j;
+                        
+                        if (src_row >= 0 && src_row < height && src_col >= 0 && src_col < width && dst_row >= 0 && dst_row < height && dst_col >= 0 && dst_col < width) {
+                            int src = (src_row * width + src_col) * 3;
+                            int dst = (dst_row * width + dst_col) * 3;
 
-                        output_pixels[dst] = pixels[src];
-                        output_pixels[dst+1] = pixels[src+1];
-                        output_pixels[dst+2] = pixels[src+2];
+                            output_pixels[dst] = pixels[src];
+                            output_pixels[dst+1] = pixels[src+1];
+                            output_pixels[dst+2] = pixels[src+2];
+                        }
                     }
                 }
             }
@@ -219,7 +229,23 @@ int main(int argc, char **argv) {
         }
         //input = ppm, output = sbu
         else if (output_sbu_flag) {
+            int *color_table = malloc(width * height * 3 * sizeof(int));
+            int color_table_size = 0;
+            for (int i = 0; i < pixels_size; i += 3) {
+                if (!colortable_exists(color_table, color_table_size, pixels[i],pixels[i+1],pixels[i+2])) {
+                    color_table[color_table_size] = pixels[i];
+                    color_table[color_table_size+1] = pixels[i+1];
+                    color_table[color_table_size+2] = pixels[i+2];
+                    color_table_size += 3;
+                }
+            }
 
+
+
+
+
+
+            free(color_table);
         }
         
         free(pixels);
@@ -231,6 +257,15 @@ int main(int argc, char **argv) {
         fscanf(input_file, "%d %d", &width, &height);
     }
 
+    return 0;
+}
+
+int colortable_exists(int *table, int table_size, int r, int g, int b) {
+    for (int i = 0; i < table_size; i += 3) {
+        if (table[i] == r && table[i+1] == g && table[i+2] == b) {
+            return 1;
+        }
+    }
     return 0;
 }
 
