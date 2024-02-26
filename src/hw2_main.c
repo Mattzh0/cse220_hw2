@@ -26,11 +26,9 @@ int main(int argc, char **argv) {
         switch(c) {
             case 'i':
                 if (optind + 1 == argc || optarg == NULL || (optarg && optarg[0] == '-')) {
-                    printf("Missing argument i");
                     return MISSING_ARGUMENT;
                 }
                 if (iflag) {
-                    printf("Duplicate argument i");
                     return DUPLICATE_ARGUMENT;
                 }
                 iflag = 1;
@@ -39,16 +37,13 @@ int main(int argc, char **argv) {
                 break;
             case 'o':
                 if (optind + 1 == argc || optarg == NULL || (optarg && optarg[0] == '-')) {
-                    printf("Missing argument o");
                     return MISSING_ARGUMENT;
                 }
                 if (oflag) {
-                    printf("Duplicate argument o");
                     return DUPLICATE_ARGUMENT;
                 }
                 oflag = 1;
                 strcpy(output_path,optarg);
-                printf("%s", output_path);
                 output_file = fopen(output_path, "w");
                 break;
             case 'c':
@@ -172,7 +167,7 @@ int main(int argc, char **argv) {
         output_sbu_flag = 1;
     }
 
-    if (input_ppm_flag && cflag && pflag) {
+    if (input_ppm_flag) {
         char p3[3];
         int width, height, color_num;
         fscanf(input_file, "%s", p3);
@@ -196,25 +191,28 @@ int main(int argc, char **argv) {
             int *output_pixels = malloc(width * height * 3 * sizeof(int));
             memcpy(output_pixels, pixels, width * height * 3 * sizeof(int));
 
-            for (int i = 0; i < copy_height; i++) {
-                for (int j = 0; j < copy_width; j++) {
-                    int src = ((copy_row + i) * width + (copy_col + j)) * 3;
-                    int dst = ((paste_row + i) * width + (paste_col + j)) * 3;
+            //if there is something to copy and paste
+            if (cflag && pflag) {
+                for (int i = 0; i < copy_height; i++) {
+                    for (int j = 0; j < copy_width; j++) {
+                        int src = ((copy_row + i) * width + (copy_col + j)) * 3;
+                        int dst = ((paste_row + i) * width + (paste_col + j)) * 3;
 
-                    output_pixels[dst] = pixels[src];
-                    output_pixels[dst+1] = pixels[src+1];
-                    output_pixels[dst+2] = pixels[src+2];
+                        output_pixels[dst] = pixels[src];
+                        output_pixels[dst+1] = pixels[src+1];
+                        output_pixels[dst+2] = pixels[src+2];
+                    }
                 }
             }
 
-            // TODO: account for case when there is -r argument, maybe create a function for it
-
+            // TODO: account for case when there is -r argument
 
             fprintf(output_file, "%s\n%d %d\n%d\n", p3, width, height, color_num);
             for (int i = 0; i < height; i++) {
                 for (int j = 0; j < width; j++) {
                     fprintf(output_file, "%d %d %d ", output_pixels[(i * width + j) * 3], output_pixels[(i * width + j) * 3 + 1], output_pixels[(i * width + j) * 3 + 2]);
                 }
+                fprintf(output_file, "\n");
             }
             fclose(output_file);
             free(output_pixels);
@@ -223,17 +221,16 @@ int main(int argc, char **argv) {
         else if (output_sbu_flag) {
 
         }
-
+        
         free(pixels);
     }
-    
-    if (input_sbu_flag) {
+    else if (input_sbu_flag) {
         char sbu[4];
         int width, height;
         fscanf(input_file, "%s", sbu);
         fscanf(input_file, "%d %d", &width, &height);
-
     }
+
     return 0;
 }
 
