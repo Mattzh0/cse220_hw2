@@ -10,6 +10,7 @@
 #include <unistd.h> 
 
 int colortable_exists(int *table, int table_size, int r, int g, int b);
+void run_length_encoding(int *non_run_encoding);
 
 int main(int argc, char **argv) {
     int c = 0;
@@ -231,21 +232,25 @@ int main(int argc, char **argv) {
         else if (output_sbu_flag) {
             int *color_table = malloc(width * height * 3 * sizeof(int));
             int color_table_size = 0;
+            int *non_run_encoding = malloc((pixels_size/3) * sizeof(int));
+            
             for (int i = 0; i < pixels_size; i += 3) {
-                if (!colortable_exists(color_table, color_table_size, pixels[i],pixels[i+1],pixels[i+2])) {
+                int encode_index = colortable_exists(color_table, color_table_size, pixels[i],pixels[i+1],pixels[i+2]);
+                if (encode_index == -1) {
                     color_table[color_table_size] = pixels[i];
                     color_table[color_table_size+1] = pixels[i+1];
                     color_table[color_table_size+2] = pixels[i+2];
+                    non_run_encoding[i/3] = color_table_size/3;
                     color_table_size += 3;
                 }
+                else {
+                    non_run_encoding[i/3] = encode_index;
+                }
             }
-
-
-
-
-
+            
 
             free(color_table);
+            free(non_run_encoding);
         }
         
         free(pixels);
@@ -260,12 +265,13 @@ int main(int argc, char **argv) {
     return 0;
 }
 
+
 int colortable_exists(int *table, int table_size, int r, int g, int b) {
     for (int i = 0; i < table_size; i += 3) {
         if (table[i] == r && table[i+1] == g && table[i+2] == b) {
-            return 1;
+            return i/3;
         }
     }
-    return 0;
+    return -1;
 }
 
