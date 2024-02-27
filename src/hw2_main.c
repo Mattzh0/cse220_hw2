@@ -13,6 +13,7 @@ int colortable_exists(int *table, int table_size, int r, int g, int b);
 void run_length_encoding(int *non_run_encoding);
 
 int main(int argc, char **argv) {
+    extern int optind, opterr, optopt;
     int c = 0;
     int iflag = 0, oflag = 0, cflag = 0, pflag = 0, rflag = 0;
     FILE *input_file;
@@ -232,7 +233,7 @@ int main(int argc, char **argv) {
         else if (output_sbu_flag) {
             int *color_table = malloc(width * height * 3 * sizeof(int));
             int color_table_size = 0;
-            int *non_run_encoding = malloc((pixels_size/3) * sizeof(int));
+            int *encoding = malloc((pixels_size/3) * sizeof(int));
             
             for (int i = 0; i < pixels_size; i += 3) {
                 int encode_index = colortable_exists(color_table, color_table_size, pixels[i],pixels[i+1],pixels[i+2]);
@@ -240,17 +241,47 @@ int main(int argc, char **argv) {
                     color_table[color_table_size] = pixels[i];
                     color_table[color_table_size+1] = pixels[i+1];
                     color_table[color_table_size+2] = pixels[i+2];
-                    non_run_encoding[i/3] = color_table_size/3;
+                    encoding[i/3] = color_table_size/3;
                     color_table_size += 3;
                 }
                 else {
-                    non_run_encoding[i/3] = encode_index;
+                    encoding[i/3] = encode_index;
                 }
             }
-            
 
+            int *output_encoding = malloc((pixels_size/3) * sizeof(int));
+            memcpy(output_encoding, encoding, (pixels_size/3) * sizeof(int));
+
+            if (cflag && pflag) {
+
+            }
+
+            fprintf(output_file, "SBU\n");
+            fprintf(output_file, "%d %d\n", width, height);
+            fprintf(output_file, "%d\n", color_table_size/3);
+
+            for (int i = 0; i < color_table_size; i++) {
+                fprintf(output_file, "%d ", color_table[i]);
+            }
+            fprintf(output_file, "\n");
+
+            for (int i = 0; i < pixels_size/3; i++) {
+                int counter = 1;
+                while (i+1 < (pixels_size/3) && (output_encoding[i] == output_encoding[i+1])) {
+                    counter += 1;
+                    i++;
+                }
+                if (counter > 1) {
+                    fprintf(output_file, "*%d %d ", counter, output_encoding[i]);
+                }
+                else {
+                    fprintf(output_file, "%d ", output_encoding[i]);
+                }
+            }
+        
             free(color_table);
-            free(non_run_encoding);
+            free(encoding);
+            free(output_file);
         }
         
         free(pixels);
