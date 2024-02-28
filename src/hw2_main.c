@@ -191,13 +191,10 @@ int main(int argc, char **argv) {
             }
         }
 
-        //input = ppm, output = ppm
-        if (output_ppm_flag) {
-            int *output_pixels = malloc(width * height * 3 * sizeof(int));
-            memcpy(output_pixels, pixels, width * height * 3 * sizeof(int));
+        int *output_pixels = malloc(width * height * 3 * sizeof(int));
+        memcpy(output_pixels, pixels, width * height * 3 * sizeof(int));
 
-            //if there is something to copy and paste
-            if (cflag && pflag) {
+        if (cflag && pflag) {
                 for (int i = 0; i < copy_height; i++) {
                     for (int j = 0; j < copy_width; j++) {
                         int src_row = copy_row + i;
@@ -217,7 +214,11 @@ int main(int argc, char **argv) {
                 }
             }
 
-            // TODO: account for case when there is -r argument
+        //input = ppm, output = ppm
+        if (output_ppm_flag) {
+            if (rflag) {
+
+            }
 
             fprintf(output_file, "%s\n%d %d\n%d\n", p3, width, height, color_num);
             for (int i = 0; i < height; i++) {
@@ -227,25 +228,41 @@ int main(int argc, char **argv) {
                 fprintf(output_file, "\n");
             }
             fclose(output_file);
-            free(output_pixels);
         }
         //input = ppm, output = sbu
         else if (output_sbu_flag) {
             int *color_table = malloc(width * height * 3 * sizeof(int));
             int color_table_size = 0;
             int *encoding = malloc((pixels_size/3) * sizeof(int));
-            
-            for (int i = 0; i < pixels_size; i += 3) {
-                int encode_index = colortable_exists(color_table, color_table_size, pixels[i],pixels[i+1],pixels[i+2]);
-                if (encode_index == -1) {
-                    color_table[color_table_size] = pixels[i];
-                    color_table[color_table_size+1] = pixels[i+1];
-                    color_table[color_table_size+2] = pixels[i+2];
-                    encoding[i/3] = color_table_size/3;
-                    color_table_size += 3;
+
+            if (cflag && pflag) {
+                for (int i = 0; i < pixels_size; i += 3) {
+                    int encode_index = colortable_exists(color_table, color_table_size, output_pixels[i],output_pixels[i+1],output_pixels[i+2]);
+                    if (encode_index == -1) {
+                        color_table[color_table_size] = output_pixels[i];
+                        color_table[color_table_size+1] = output_pixels[i+1];
+                        color_table[color_table_size+2] = output_pixels[i+2];
+                        encoding[i/3] = color_table_size/3;
+                        color_table_size += 3;
+                    }
+                    else {
+                        encoding[i/3] = encode_index;
+                    }
                 }
-                else {
-                    encoding[i/3] = encode_index;
+            }
+            else {
+                for (int i = 0; i < pixels_size; i += 3) {
+                    int encode_index = colortable_exists(color_table, color_table_size, pixels[i],pixels[i+1],pixels[i+2]);
+                    if (encode_index == -1) {
+                        color_table[color_table_size] = pixels[i];
+                        color_table[color_table_size+1] = pixels[i+1];
+                        color_table[color_table_size+2] = pixels[i+2];
+                        encoding[i/3] = color_table_size/3;
+                        color_table_size += 3;
+                    }
+                    else {
+                        encoding[i/3] = encode_index;
+                    }
                 }
             }
 
@@ -253,6 +270,24 @@ int main(int argc, char **argv) {
             memcpy(output_encoding, encoding, (pixels_size/3) * sizeof(int));
 
             if (cflag && pflag) {
+                for (int i = 0; i < copy_height; i++) {
+                    for (int j = 0; j < copy_width; j++) {
+                        int src_row = copy_row + i;
+                        int src_col = copy_col + j;
+                        int dst_row = paste_row + i;
+                        int dst_col = paste_col + j;
+
+                        if (src_row >= 0 && src_row < height && src_col >= 0 && src_col < width && dst_row >= 0 && dst_row < height && dst_col >= 0 && dst_col < width) {
+                            int src = (src_row * width + src_col);
+                            int dst = (dst_row * width + dst_col);
+
+                            output_encoding[dst] = encoding[src];
+                        }
+                    }
+                }
+            }
+
+            if (rflag) {
 
             }
 
@@ -278,19 +313,58 @@ int main(int argc, char **argv) {
                     fprintf(output_file, "%d ", output_encoding[i]);
                 }
             }
-        
+         
             free(color_table);
             free(encoding);
+            free(output_encoding);
             free(output_file);
         }
-        
+        free(output_pixels);
         free(pixels);
     }
     else if (input_sbu_flag) {
-        char sbu[4];
+        /* char sbu[4];
         int width, height;
+        int color_table_num_entries;
         fscanf(input_file, "%s", sbu);
         fscanf(input_file, "%d %d", &width, &height);
+        fscanf(input_file, "%d", &color_table_num_entries);
+
+        int color_table_size = color_table_num_entries*3;
+
+        int *color_table = malloc((color_table_size) * sizeof(int));
+        for (int i = 0; i < color_table_size; i++) {
+            fscanf(input_file, "%d", &color_table[i]);
+        }
+
+        int *encoding = malloc(width * height * sizeof(int));
+
+        if (output_ppm_flag) {
+
+            if (cflag && pflag) {
+
+            }
+
+            if (rflag) {
+
+            }
+
+        }
+        else if (output_sbu_flag) {
+
+            if (cflag && pflag) {
+
+            }
+
+            if (rflag) {
+
+            }
+            
+        }
+
+
+        free(color_table);
+        free(encoding); */
     }
 
     return 0;
