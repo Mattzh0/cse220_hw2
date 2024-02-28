@@ -195,24 +195,24 @@ int main(int argc, char **argv) {
         memcpy(output_pixels, pixels, width * height * 3 * sizeof(int));
 
         if (cflag && pflag) {
-                for (int i = 0; i < copy_height; i++) {
-                    for (int j = 0; j < copy_width; j++) {
-                        int src_row = copy_row + i;
-                        int src_col = copy_col + j;
-                        int dst_row = paste_row + i;
-                        int dst_col = paste_col + j;
-                        
-                        if (src_row >= 0 && src_row < height && src_col >= 0 && src_col < width && dst_row >= 0 && dst_row < height && dst_col >= 0 && dst_col < width) {
-                            int src = (src_row * width + src_col) * 3;
-                            int dst = (dst_row * width + dst_col) * 3;
+            for (int i = 0; i < copy_height; i++) {
+                for (int j = 0; j < copy_width; j++) {
+                    int src_row = copy_row + i;
+                    int src_col = copy_col + j;
+                    int dst_row = paste_row + i;
+                    int dst_col = paste_col + j;
+                    
+                    if (src_row >= 0 && src_row < height && src_col >= 0 && src_col < width && dst_row >= 0 && dst_row < height && dst_col >= 0 && dst_col < width) {
+                        int src = (src_row * width + src_col) * 3;
+                        int dst = (dst_row * width + dst_col) * 3;
 
-                            output_pixels[dst] = pixels[src];
-                            output_pixels[dst+1] = pixels[src+1];
-                            output_pixels[dst+2] = pixels[src+2];
-                        }
+                        output_pixels[dst] = pixels[src];
+                        output_pixels[dst+1] = pixels[src+1];
+                        output_pixels[dst+2] = pixels[src+2];
                     }
                 }
             }
+        }
 
         //input = ppm, output = ppm
         if (output_ppm_flag) {
@@ -227,7 +227,6 @@ int main(int argc, char **argv) {
                 }
                 fprintf(output_file, "\n");
             }
-            fclose(output_file);
         }
         //input = ppm, output = sbu
         else if (output_sbu_flag) {
@@ -235,61 +234,19 @@ int main(int argc, char **argv) {
             int color_table_size = 0;
             int *encoding = malloc((pixels_size/3) * sizeof(int));
 
-            if (cflag && pflag) {
-                for (int i = 0; i < pixels_size; i += 3) {
-                    int encode_index = colortable_exists(color_table, color_table_size, output_pixels[i],output_pixels[i+1],output_pixels[i+2]);
-                    if (encode_index == -1) {
-                        color_table[color_table_size] = output_pixels[i];
-                        color_table[color_table_size+1] = output_pixels[i+1];
-                        color_table[color_table_size+2] = output_pixels[i+2];
-                        encoding[i/3] = color_table_size/3;
-                        color_table_size += 3;
-                    }
-                    else {
-                        encoding[i/3] = encode_index;
-                    }
+            for (int i = 0; i < pixels_size; i += 3) {
+                int encode_index = colortable_exists(color_table, color_table_size, output_pixels[i],output_pixels[i+1],output_pixels[i+2]);
+                if (encode_index == -1) {
+                    color_table[color_table_size] = output_pixels[i];
+                    color_table[color_table_size+1] = output_pixels[i+1];
+                    color_table[color_table_size+2] = output_pixels[i+2];
+                    encoding[i/3] = color_table_size/3;
+                    color_table_size += 3;
+                }
+                else {
+                    encoding[i/3] = encode_index;
                 }
             }
-            else {
-                for (int i = 0; i < pixels_size; i += 3) {
-                    int encode_index = colortable_exists(color_table, color_table_size, pixels[i],pixels[i+1],pixels[i+2]);
-                    if (encode_index == -1) {
-                        color_table[color_table_size] = pixels[i];
-                        color_table[color_table_size+1] = pixels[i+1];
-                        color_table[color_table_size+2] = pixels[i+2];
-                        encoding[i/3] = color_table_size/3;
-                        color_table_size += 3;
-                    }
-                    else {
-                        encoding[i/3] = encode_index;
-                    }
-                }
-            }
-
-            int *output_encoding = malloc((pixels_size/3) * sizeof(int));
-            memcpy(output_encoding, encoding, (pixels_size/3) * sizeof(int));
-
-            /* if (cflag && pflag) {
-                for (int i = 0; i < copy_height; i++) {
-                    for (int j = 0; j < copy_width; j++) {
-                        int src_row = copy_row + i;
-                        int src_col = copy_col + j;
-                        int dst_row = paste_row + i;
-                        int dst_col = paste_col + j;
-
-                        if (src_row >= 0 && src_row < height && src_col >= 0 && src_col < width && dst_row >= 0 && dst_row < height && dst_col >= 0 && dst_col < width) {
-                            int src = (src_row * width + src_col);
-                            int dst = (dst_row * width + dst_col);
-
-                            output_encoding[dst] = encoding[src];
-                        }
-                    }
-                }
-            }
-
-            if (rflag) {
-
-            } */
 
             fprintf(output_file, "SBU\n");
             fprintf(output_file, "%d %d\n", width, height);
@@ -302,23 +259,21 @@ int main(int argc, char **argv) {
 
             for (int i = 0; i < pixels_size/3; i++) {
                 int counter = 1;
-                while ((i + counter) < (pixels_size/3) && (output_encoding[i] == output_encoding[i + counter])) {
+                while ((i + counter) < (pixels_size/3) && (encoding[i] == encoding[i + counter])) {
                     counter++;
                 }
                 if (counter > 1) {
-                    fprintf(output_file, "*%d %d ", counter, output_encoding[i]);
+                    fprintf(output_file, "*%d %d ", counter, encoding[i]);
                 }
                 else {
-                    fprintf(output_file, "%d ", output_encoding[i]);
+                    fprintf(output_file, "%d ", encoding[i]);
                 }
                 i += counter - 1;
             }
-         
             free(color_table);
             free(encoding);
-            free(output_encoding);
-            free(output_file);
         }
+        fclose(output_file);
         free(output_pixels);
         free(pixels);
     }
