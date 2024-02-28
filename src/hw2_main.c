@@ -269,7 +269,7 @@ int main(int argc, char **argv) {
             int *output_encoding = malloc((pixels_size/3) * sizeof(int));
             memcpy(output_encoding, encoding, (pixels_size/3) * sizeof(int));
 
-            if (cflag && pflag) {
+            /* if (cflag && pflag) {
                 for (int i = 0; i < copy_height; i++) {
                     for (int j = 0; j < copy_width; j++) {
                         int src_row = copy_row + i;
@@ -289,7 +289,7 @@ int main(int argc, char **argv) {
 
             if (rflag) {
 
-            }
+            } */
 
             fprintf(output_file, "SBU\n");
             fprintf(output_file, "%d %d\n", width, height);
@@ -302,9 +302,8 @@ int main(int argc, char **argv) {
 
             for (int i = 0; i < pixels_size/3; i++) {
                 int counter = 1;
-                while (i+1 < (pixels_size/3) && (output_encoding[i] == output_encoding[i+1])) {
-                    counter += 1;
-                    i++;
+                while ((i + counter) < (pixels_size/3) && (output_encoding[i] == output_encoding[i + counter])) {
+                    counter++;
                 }
                 if (counter > 1) {
                     fprintf(output_file, "*%d %d ", counter, output_encoding[i]);
@@ -312,6 +311,7 @@ int main(int argc, char **argv) {
                 else {
                     fprintf(output_file, "%d ", output_encoding[i]);
                 }
+                i += counter - 1;
             }
          
             free(color_table);
