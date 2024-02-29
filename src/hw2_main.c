@@ -278,12 +278,12 @@ int main(int argc, char **argv) {
         free(pixels);
     }
     else if (input_sbu_flag) {
-        /* char sbu[4];
+        char sbu[4];
         int width, height;
         int color_table_num_entries;
         fscanf(input_file, "%s", sbu);
-        fscanf(input_file, "%d %d", &width, &height);
-        fscanf(input_file, "%d", &color_table_num_entries);
+        fscanf(input_file, "%d %d\n", &width, &height);
+        fscanf(input_file, "%d\n", &color_table_num_entries);
 
         int color_table_size = color_table_num_entries*3;
 
@@ -294,18 +294,56 @@ int main(int argc, char **argv) {
 
         int *encoding = malloc(width * height * sizeof(int));
 
-        if (output_ppm_flag) {
+        int ind = 0;
+        int value, count;
+        while (ind < (width * height)) {
+            if (fscanf(input_file, "%d", &value)) {
+                encoding[ind++] = value;
+            }
+            else if (fscanf(input_file, "*%d %d", &count, &value)) {
+                while (count > 0) {
+                    encoding[ind++] = value;
+                    count--;
+                }
+            }
+        }
 
+        for (int i = 0; i < (width * height); i++) {
+            printf("%d ", encoding[i]);
+        }
+
+        if (output_sbu_flag) {
             if (cflag && pflag) {
 
             }
-
             if (rflag) {
 
             }
 
+            fprintf(output_file, "SBU\n");
+            fprintf(output_file, "%d %d\n", width, height);
+            fprintf(output_file, "%d\n", color_table_size/3);
+
+            for (int i = 0; i < color_table_size; i++) {
+                fprintf(output_file, "%d ", color_table[i]);
+            }
+            fprintf(output_file, "\n");
+
+            for (int i = 0; i < (width*height); i++) {
+                int counter = 1;
+                while ((i + counter) < (width*height) && (encoding[i] == encoding[i + counter])) {
+                    counter++;
+                }
+                if (counter > 1) {
+                    fprintf(output_file, "*%d %d ", counter, encoding[i]);
+                }
+                else {
+                    fprintf(output_file, "%d ", encoding[i]);
+                }
+                i += counter - 1;
+            }
         }
-        else if (output_sbu_flag) {
+        /* else if (output_ppm_flag) {
 
             if (cflag && pflag) {
 
@@ -315,11 +353,11 @@ int main(int argc, char **argv) {
 
             }
             
-        }
+        } */
 
-
+        fclose(input_file);
         free(color_table);
-        free(encoding); */
+        free(encoding);
     }
 
     return 0;
