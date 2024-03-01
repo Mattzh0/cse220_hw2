@@ -120,7 +120,6 @@ int main(int argc, char **argv) {
                     switch (r_param_len) {
                         case 0:
                             font_msg = token_r;
-                            printf("%s", font_msg);
                             break;
                         case 1:
                             font_file = fopen(token_r, "r");
@@ -229,8 +228,48 @@ int main(int argc, char **argv) {
         }
 
         if (rflag) {
-            printf("%s %d %d %d", font_msg, font_size, font_row, font_col);
+            int font_txt_len = 0; //1085
+            int font_txt_rows = 0; //5
+            int font_txt_cols= 0; //217
+            int box_rows = 0; //5
+            int box_cols = 0; //7
+            char ch;
 
+            while ((ch = fgetc(font_file)) != EOF) {
+                if (ch == '\n') {
+                    font_txt_rows++;
+                } else {
+                    font_txt_len++;
+                }
+            }
+            font_txt_cols = font_txt_len/font_txt_rows;
+            box_rows = font_txt_rows;
+            box_cols = (font_txt_cols - 26)/26;
+
+            printf("%d %d %d %d %d", font_txt_len, font_txt_rows, font_txt_cols, box_rows, box_cols);
+            fseek(font_file, 0, SEEK_SET);
+
+            char *font_data = malloc(font_txt_cols * sizeof(char));
+            int font_index = 0;
+            while ((ch = getc(font_file)) != EOF) {
+                if (ch == ' ') {
+                    font_data[font_index++] = '.';
+                } else if (ch == '*') {
+                    font_data[font_index++] = ch;
+                }
+            }
+
+            /* for (int i = 0; i < font_txt_len; i++) {
+                printf("%c ", font_data[i]);
+            } */
+
+            for (int i = 0; font_msg[i] != '\0'; i++) {
+                char cur_char = font_msg[i];
+                printf("%c\n", cur_char);
+            }
+        
+            fclose(font_file);
+            free(font_data);
         }
 
         if (output_ppm_flag) {
