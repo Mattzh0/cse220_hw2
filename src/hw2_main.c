@@ -25,6 +25,8 @@ int main(int argc, char **argv) {
 
     int copy_row, copy_col, copy_width, copy_height;
     int paste_row, paste_col;
+    char *font_msg;
+    int font_size, font_row, font_col;
 
     while ((c = getopt(argc, argv, "i:o:c:p:r:")) != -1) {
         switch(c) {
@@ -115,12 +117,26 @@ int main(int argc, char **argv) {
 
                 char* token_r = strtok(optarg, ",");
                 while (token_r) {
+                    switch (r_param_len) {
+                        case 0:
+                            font_msg = token_r;
+                            printf("%s", font_msg);
+                            break;
+                        case 1:
+                            font_file = fopen(token_r, "r");
+                            break;
+                        case 2:
+                            font_size = atoi(token_r);
+                            break;
+                        case 3:
+                            font_row = atoi(token_r);
+                            break;
+                        case 4:
+                            font_col = atoi(token_r);
+                                break;
+                    }
                     r_param_len += 1;
                     token_r = strtok(NULL, ",");
-
-                    if (r_param_len == 2) {
-                        font_file = fopen(token_r, "r");
-                    }
                 }
 
                 break;
@@ -151,7 +167,6 @@ int main(int argc, char **argv) {
         return R_ARGUMENT_INVALID;
     }
 
-    //flags to indicate if input is ppm or sbu
     int input_ppm_flag = 0;
     int input_sbu_flag = 0;
     char *input_extension = strrchr(input_path, '.');
@@ -161,7 +176,6 @@ int main(int argc, char **argv) {
         input_sbu_flag = 1;
     }
 
-    //flags to indicate if output is ppm or sbu
     int output_ppm_flag = 0;
     int output_sbu_flag = 0;
     char *output_extension = strrchr(output_path, '.');
@@ -178,7 +192,6 @@ int main(int argc, char **argv) {
         fscanf(input_file, "%d %d", &width, &height);
         fscanf(input_file, "%d", &color_num);
 
-        //store the ppm input pixel data in a 1d array
         int *pixels = malloc(width * height * 3 * sizeof(int));
         int pixels_size = width*height*3;
         for (int i = 0; i < height; i++) {
@@ -203,7 +216,6 @@ int main(int argc, char **argv) {
                     int dst_col = paste_col + j;                 
                     
                     if (src_row >= 0 && src_row < height && src_col >= 0 && src_col < width && dst_row >= 0 && dst_row < height && dst_col >= 0 && dst_col < width) {
-                        //printf("%d %d %d %d | ", src_row, src_col, dst_row, dst_col);
                         
                         int src = (src_row * width + src_col) * 3;
                         int dst = (dst_row * width + dst_col) * 3;
@@ -216,12 +228,12 @@ int main(int argc, char **argv) {
             }
         }
 
-        //input = ppm, output = ppm
+        if (rflag) {
+            //printf("%s %d %d %d", font_msg, font_size, font_row, font_col);
+
+        }
+
         if (output_ppm_flag) {
-            if (rflag) {
-
-            }
-
             fprintf(output_file, "%s\n%d %d\n%d\n", p3, width, height, color_num);
             for (int i = 0; i < height; i++) {
                 for (int j = 0; j < width; j++) {
@@ -230,7 +242,6 @@ int main(int argc, char **argv) {
                 fprintf(output_file, "\n");
             }
         }
-        //input = ppm, output = sbu
         else if (output_sbu_flag) {
             int *color_table = malloc(width * height * 3 * sizeof(int));
             int color_table_size = 0;
@@ -362,12 +373,13 @@ int main(int argc, char **argv) {
             memcpy(color_table, new_color_table, color_table_size*sizeof(int));
             free(new_color_table);
         }
+        
+        if (rflag) {
+            //printf("%s %d %d %d", font_msg, font_size, font_row, font_col);
+            
+        }
 
         if (output_sbu_flag) {
-            if (rflag) {
-
-            }
-
             fprintf(output_file, "SBU\n");
             fprintf(output_file, "%d %d\n", width, height);
             fprintf(output_file, "%d\n", color_table_size/3);
@@ -392,9 +404,6 @@ int main(int argc, char **argv) {
             }
         }
         else if (output_ppm_flag) {
-            if (rflag) {
-
-            }
             fprintf(output_file, "P3\n%d %d\n255\n", width, height);
             for (int i = 0; i < (width * height); i++) {
                 int color_index = final_encoding[i];
