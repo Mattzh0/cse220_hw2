@@ -313,6 +313,8 @@ int main(int argc, char **argv) {
 
         int *encoding_copy = malloc(width * height * sizeof(int));
         memcpy(encoding_copy, encoding, width * height * sizeof(int));
+        int *final_encoding = malloc(width * height * sizeof(int));
+        memcpy(final_encoding, encoding, width * height * sizeof(int));
 
         if (cflag && pflag) {
             for (int i = 0; i < copy_height; i++) {
@@ -332,8 +334,10 @@ int main(int argc, char **argv) {
 
             int new_color_table_size = 0;
             int *new_color_table = malloc(width * height * 3 * sizeof(int));
+            free(final_encoding);
+            final_encoding = malloc(width * height * sizeof(int));
             for (int i = 0; i < width * height; i++) {
-                int color_index = encoding[i];
+                int color_index = encoding_copy[i];
                 int r = color_table[color_index * 3];
                 int g = color_table[(color_index * 3) + 1];
                 int b = color_table[(color_index * 3) + 2];
@@ -343,10 +347,15 @@ int main(int argc, char **argv) {
                     new_color_table[new_color_table_size] = r;
                     new_color_table[(new_color_table_size) + 1] = g;
                     new_color_table[(new_color_table_size) + 2] = b;
+                    final_encoding[i] = new_color_table_size/3;
                     new_color_table_size += 3;
+                }
+                else {
+                    final_encoding[i] = encode_index;
                 }
             }
             
+            printf("%d ", new_color_table_size);
             color_table_size = new_color_table_size;
             free(color_table);
             color_table = malloc(color_table_size * sizeof(int));
@@ -370,14 +379,14 @@ int main(int argc, char **argv) {
 
             for (int i = 0; i < (width*height); i++) {
                 int counter = 1;
-                while ((i + counter) < (width*height) && (encoding_copy[i] == encoding_copy[i + counter])) {
+                while ((i + counter) < (width*height) && (final_encoding[i] == final_encoding[i + counter])) {
                     counter++;
                 }
                 if (counter > 1) {
-                    fprintf(output_file, "*%d %d ", counter, encoding_copy[i]);
+                    fprintf(output_file, "*%d %d ", counter, final_encoding[i]);
                 }
                 else {
-                    fprintf(output_file, "%d ", encoding_copy[i]);
+                    fprintf(output_file, "%d ", final_encoding[i]);
                 }
                 i += counter - 1;
             }
@@ -388,7 +397,7 @@ int main(int argc, char **argv) {
             }
             fprintf(output_file, "P3\n%d %d\n255\n", width, height);
             for (int i = 0; i < (width * height); i++) {
-                int color_index = encoding_copy[i];
+                int color_index = final_encoding[i];
                 int r = color_table[color_index * 3];
                 int g = color_table[(color_index * 3) + 1];
                 int b = color_table[(color_index * 3) + 2];
@@ -404,6 +413,7 @@ int main(int argc, char **argv) {
         free(color_table);
         free(encoding);
         free(encoding_copy);
+        free(final_encoding);
     }
     return 0;
 }
@@ -417,8 +427,5 @@ int colortable_exists(int *table, int table_size, int r, int g, int b) {
     }
     return -1;
 }
-
-/* printf("Copying value %d over %d from %d to %d, iteration %d\n", encoding[src], encoding_copy[dst], src, dst, b);
-                            b++; */
 
 
