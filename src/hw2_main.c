@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
         }
 
         if (rflag) {
-            //printf("%s %d %d %d", font_msg, font_size, font_row, font_col);
+            printf("%s %d %d %d", font_msg, font_size, font_row, font_col);
 
         }
 
@@ -375,7 +375,7 @@ int main(int argc, char **argv) {
         }
         
         if (rflag) {
-            //printf("%s %d %d %d", font_msg, font_size, font_row, font_col);
+            printf("%s %d %d %d", font_msg, font_size, font_row, font_col);
             
         }
 
