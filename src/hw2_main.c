@@ -284,8 +284,7 @@ int main(int argc, char **argv) {
             }
             
             //account for the mistake in font2.txt (2 empty columns between 'Q' and 'R')
-            //./tests/fonts/font2.txt
-            if (strcmp(font_path, "./tests/fonts/font2.txt") == 0) {
+            if (strstr(font_path, "font2.txt") != NULL) {
                 int exception[26] = {0, 5, 11, 16, 21, 26, 31, 37, 42, 46, 52, 57, 62, 68, 74, 80, 86, 93, 99, 105, 112, 118, 126, 134, 140, 146};
                 memcpy(starting_indices, exception, 26 * sizeof(int));
             }
