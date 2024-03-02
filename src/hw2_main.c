@@ -284,7 +284,7 @@ int main(int argc, char **argv) {
             }
             
             //account for the mistake in font2.txt (2 empty columns between 'Q' and 'R')
-            //./tests/fonts/font2.txt"
+            //./tests/fonts/font2.txt
             if (strcmp(font_path, "./tests/fonts/font2.txt") == 0) {
                 int exception[26] = {0, 5, 11, 16, 21, 26, 31, 37, 42, 46, 52, 57, 62, 68, 74, 80, 86, 93, 99, 105, 112, 118, 126, 134, 140, 146};
                 memcpy(starting_indices, exception, 26 * sizeof(int));
@@ -379,7 +379,6 @@ int main(int argc, char **argv) {
                     font_col += 5;
                 }
             }
-            fclose(font_file);
         }
 
         if (output_ppm_flag) {
@@ -432,13 +431,11 @@ int main(int argc, char **argv) {
                 }
                 i += counter - 1;
             }
-            fclose(output_file);
             free(color_table);
             free(encoding);
         }
         free(output_pixels);
         free(pixels);
-        fclose(input_file);
     }
     else if (input_sbu_flag) {
         char sbu[4];
@@ -524,8 +521,105 @@ int main(int argc, char **argv) {
         }
         
         if (rflag) {
-            printf("%s %d %d %d", font_msg, font_size, font_row, font_col);
+            /* int font_txt_len = 0;
+            int font_txt_rows = 0;
+            int font_txt_cols= 0;
+            char ch;
+
+            while ((ch = fgetc(font_file)) != EOF) {
+                if (ch == '\n') {
+                    font_txt_rows++;
+                } else {
+                    font_txt_len++;
+                }
+            }
+
+            font_txt_cols = font_txt_len/font_txt_rows;
+            fseek(font_file, 0, SEEK_SET);
+
+            char font_data[font_txt_rows][font_txt_cols];
+
+            for (int row = 0; row < font_txt_rows; row++) {
+                for (int col = 0; col < font_txt_cols; col++) {
+                    ch = fgetc(font_file);
+                    if (ch == ' ') {
+                        font_data[row][col] = '.';
+                    } 
+                    else if (ch == '*') {
+                        font_data[row][col] = ch;
+                    }
+                }
+                fgetc(font_file);
+            }
+
+            int starting_indices[26];
+            for (int i = 0; i < 26; i++) {
+                starting_indices[i] = 0;
+            }
+            int current_index = 1;
+
+            for (int col = 1; col < font_txt_cols; col++) {
+                int whitespace_col = 0;
+                for (int row = 0; row < font_txt_rows; row++) {
+                    if (font_data[row][col] == '.') {
+                        whitespace_col = 1;
+                    }
+                    else if (font_data[row][col] == '*'){
+                        whitespace_col = 0;
+                        break;
+                    }
+                }
+                if (whitespace_col == 1) {
+                    if (current_index >= 0 && current_index < 26) {
+                        starting_indices[current_index] = col + 1;
+                    }
+                    current_index++;
+                }
+            }
             
+            if (strcmp(font_path, "./tests/fonts/font2.txt") == 0) {
+                int exception[26] = {0, 5, 11, 16, 21, 26, 31, 37, 42, 46, 52, 57, 62, 68, 74, 80, 86, 93, 99, 105, 112, 118, 126, 134, 140, 146};
+                memcpy(starting_indices, exception, 26 * sizeof(int));
+            }
+
+            for (int i = 0; font_msg[i] != '\0'; i++) {
+                char cur_char = toupper(font_msg[i]);
+                if (cur_char != ' ') {
+                    int code = cur_char - 'A';
+                    int start_col = starting_indices[code];
+                    int end_col;
+                    if (code == 25) {
+                        end_col = font_txt_cols - 1;
+                    }
+                    else {
+                        end_col = starting_indices[(code+1)] - 1;
+                    }
+
+                    int *char_box_data = malloc((font_txt_rows) * (end_col - start_col) * sizeof(int));
+                    int box_index = 0;
+                    for (int row = 0; row < font_txt_rows; row++) {
+                        for (int col = start_col; col < end_col; col++) {
+                            if (font_data[row][col] == '*') {
+                                char_box_data[box_index] = 255;
+                                char_box_data[box_index+1] = 255;
+                                char_box_data[box_index+2] = 255;
+                                box_index += 3;
+                            }
+                            else {
+                                char_box_data[box_index] = 0;
+                                char_box_data[box_index+1] = 0;
+                                char_box_data[box_index+2] = 0;
+                                box_index += 3;
+                            }
+                        }
+                    }    
+                    
+                }
+                else {
+                    font_col += 5;
+                }
+            }
+            fclose(font_file); */
         }
 
         if (output_sbu_flag) {
@@ -565,14 +659,17 @@ int main(int argc, char **argv) {
                 }
             }
             fprintf(output_file,"\n");
-            fclose(output_file);
         }
-        fclose(input_file);
         free(color_table);
         free(encoding);
         free(encoding_copy);
         free(final_encoding);
     }
+    if (rflag) {
+        fclose(font_file);
+    }
+    fclose(input_file);
+    fclose(output_file);
     return 0;
 }
 
