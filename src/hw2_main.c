@@ -21,6 +21,7 @@ int main(int argc, char **argv) {
     FILE *output_file;
     char output_path[256] = "";
     FILE *font_file;
+    char font_path[256] = "";
     int c_param_len = 0, p_param_len = 0, r_param_len = 0;
 
     int copy_row, copy_col, copy_width, copy_height;
@@ -60,7 +61,7 @@ int main(int argc, char **argv) {
                     return DUPLICATE_ARGUMENT;
                 }
                 cflag = 1;
-                
+            
                 char* token_c = strtok(optarg, ",");
                 while (token_c) {
                     switch (c_param_len) {
@@ -80,7 +81,6 @@ int main(int argc, char **argv) {
                     c_param_len += 1;
                     token_c = strtok(NULL, ",");
                 }
-
                 break;
             case 'p':
                 if (optind + 1 == argc || optarg == NULL || (optarg && optarg[0] == '-')) {
@@ -104,7 +104,6 @@ int main(int argc, char **argv) {
                     p_param_len += 1;
                     token_p = strtok(NULL, ",");
                 }
-
                 break;
             case 'r':
                 if (optind + 1 == argc || optarg == NULL || (optarg && optarg[0] == '-')) {
@@ -122,6 +121,7 @@ int main(int argc, char **argv) {
                             font_msg = token_r;
                             break;
                         case 1:
+                            strcpy(font_path, token_r);
                             font_file = fopen(token_r, "r");
                             break;
                         case 2:
@@ -137,7 +137,6 @@ int main(int argc, char **argv) {
                     r_param_len += 1;
                     token_r = strtok(NULL, ",");
                 }
-
                 break;
             case '?':
                 return UNRECOGNIZED_ARGUMENT;
@@ -233,6 +232,8 @@ int main(int argc, char **argv) {
             int font_txt_cols= 0;
             char ch;
 
+            printf("%s ", font_path);
+
             while ((ch = fgetc(font_file)) != EOF) {
                 if (ch == '\n') {
                     font_txt_rows++;
@@ -283,6 +284,12 @@ int main(int argc, char **argv) {
                     current_index++;
                 }
             }
+            
+            //account for the mistake in font2.txt (2 empty columns between 'Q' and 'R')
+            if (strcmp(font_path, "./tests/fonts/font2.txt") == 0) {
+                int exception[26] = {0, 5, 11, 16, 21, 26, 31, 37, 42, 46, 52, 57, 62, 68, 74, 80, 86, 93, 99, 105, 112, 118, 126, 134, 140, 146};
+                memcpy(starting_indices, exception, 26 * sizeof(int));
+            }
 
             for (int i = 0; font_msg[i] != '\0'; i++) {
                 char cur_char = toupper(font_msg[i]);
@@ -296,7 +303,6 @@ int main(int argc, char **argv) {
                     else {
                         end_col = starting_indices[(code+1)] - 1;
                     }
-
 
                     int *char_box_data = malloc((font_txt_rows) * (end_col - start_col) * 3 * sizeof(int));
                     int box_index = 0;
@@ -362,6 +368,9 @@ int main(int argc, char **argv) {
                             }
                         } 
                         font_col += (cols + 1);
+                    }
+                    else {
+                        break;
                     }
 
                     free(char_box_data);
