@@ -334,7 +334,7 @@ int main(int argc, char **argv) {
                             }
                         }
                     } 
-                    font_col += (cols + 2);
+                    font_col += (cols + 1);
                     }
 
                     free(char_box_data);
