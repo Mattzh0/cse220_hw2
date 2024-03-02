@@ -228,7 +228,7 @@ int main(int argc, char **argv) {
         }
 
         if (rflag) {
-            int font_txt_len = 0; //1085
+            /* int font_txt_len = 0; //1
             int font_txt_rows = 0; //5
             int font_txt_cols= 0; //217
             int box_rows = 0; //5
@@ -246,12 +246,12 @@ int main(int argc, char **argv) {
             box_rows = font_txt_rows;
             box_cols = (font_txt_cols - 26)/26;
 
-            printf("%d %d %d %d %d", font_txt_len, font_txt_rows, font_txt_cols, box_rows, box_cols);
+            //printf("%d %d %d %d %d", font_txt_len, font_txt_rows, font_txt_cols, box_rows, box_cols);
             fseek(font_file, 0, SEEK_SET);
 
-            char *font_data = malloc(font_txt_cols * sizeof(char));
+            char *font_data = malloc(font_txt_len * sizeof(char));
             int font_index = 0;
-            while ((ch = getc(font_file)) != EOF) {
+            while ((ch = fgetc(font_file)) != EOF) {
                 if (ch == ' ') {
                     font_data[font_index++] = '.';
                 } else if (ch == '*') {
@@ -259,17 +259,71 @@ int main(int argc, char **argv) {
                 }
             }
 
-            /* for (int i = 0; i < font_txt_len; i++) {
+            for (int i = 0; i < font_txt_len; i++) {
                 printf("%c ", font_data[i]);
-            } */
+            }
 
             for (int i = 0; font_msg[i] != '\0'; i++) {
-                char cur_char = font_msg[i];
-                printf("%c\n", cur_char);
+                char cur_char = toupper(font_msg[i]);
+                if (cur_char != ' ') {
+                    int code = cur_char - 'A';
+                    int start_col = (box_cols+1) * code;
+
+                    //printf("%c %d %d | ", cur_char, start_row, start_col);
+                    int *char_box_data = malloc(box_rows * box_cols * 3 * sizeof(int));
+                    for (int i = 0; i < box_rows; i++) {
+                        for (int j = 0; j < box_cols; j++) {
+                            char pixel = font_data[i * font_txt_cols + start_col + j];
+                            if (pixel == '*') {
+                                char_box_data[(i * box_cols + j) * 3] = 255;
+                                char_box_data[(i * box_cols + j) * 3 + 1] = 255;
+                                char_box_data[(i * box_cols + j) * 3 + 2] = 255;
+                            }
+                            else {
+                                char_box_data[(i * box_cols + j) * 3] = 0;
+                                char_box_data[(i * box_cols + j) * 3 + 1] = 0;
+                                char_box_data[(i * box_cols + j) * 3 + 2] = 0;
+                            }
+                        }
+                    }
+
+                    int start_position = (font_row * width + font_col) * 3;
+                    for (int i = 0; i < box_rows; i++) {
+                        for (int j = 0; j < box_cols; j++) {
+                            int r = char_box_data[(i * box_cols + j) * 3];
+                            int g = char_box_data[(i * box_cols + j) * 3 + 1];
+                            int b = char_box_data[(i * box_cols + j) * 3 + 2];
+
+                            if (r == 255 && g == 255 && b == 255 && (font_row + i) < height && (font_col + j) < width) {
+                                output_pixels[start_position + (i * width * 3) + (j * 3)] = r;
+                                output_pixels[start_position + (i * width * 3) + (j * 3) + 1] = g;
+                                output_pixels[start_position + (i * width * 3) + (j * 3) + 2] = b;
+                            }
+                        }
+                    }
+                    font_col += (box_cols + 2);
+                    
+                    ./a.out -i "desert.ppm" -o "output.ppm" -r "ihello","font1.txt",1,100,150
+
+                    if (font_size > 1) {
+                        int *scaled_box_data = malloc(box_rows * box_cols * 3 * font_size * sizeof(int));
+
+                    }
+
+                    if (cur_char == 'I') {
+                        int j = 0;
+                        for (int i = 0 ; i < (box_rows * box_cols * 3); i++) {
+                            printf("%d ", char_box_data[i]);
+                            j++;
+                        }
+                    }
+
+                    free(char_box_data);
+                }
             }
         
             fclose(font_file);
-            free(font_data);
+            free(font_data); */
         }
 
         if (output_ppm_flag) {
