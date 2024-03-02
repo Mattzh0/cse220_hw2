@@ -10,6 +10,7 @@
 #include <unistd.h> 
 
 int colortable_exists(int *table, int table_size, int r, int g, int b);
+void run_length_encoding(int *non_run_encoding);
 
 int main(int argc, char **argv) {
     extern int optind, opterr, optopt;
@@ -227,9 +228,9 @@ int main(int argc, char **argv) {
         }
 
         if (rflag) {
-            int font_txt_len = 0; //1085
-            int font_txt_rows = 0; //5
-            int font_txt_cols= 0; //217
+            int font_txt_len = 0;
+            int font_txt_rows = 0;
+            int font_txt_cols= 0;
             char ch;
 
             while ((ch = fgetc(font_file)) != EOF) {
@@ -404,7 +405,6 @@ int main(int argc, char **argv) {
         free(output_pixels);
         free(pixels);
         fclose(input_file);
-        fclose(font_file);
     }
     else if (input_sbu_flag) {
         char sbu[4];
@@ -551,3 +551,5 @@ int colortable_exists(int *table, int table_size, int r, int g, int b) {
     }
     return -1;
 }
+
+
