@@ -381,6 +381,7 @@ int main(int argc, char **argv) {
                 }
                 
             }
+            fclose(font_file);
         }
 
         if (output_ppm_flag) {
