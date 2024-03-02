@@ -317,35 +317,61 @@ int main(int argc, char **argv) {
                         }
                     }
 
+                    if (font_size > 1) {
+                        int rows = font_txt_rows;
+                        int cols = (end_col - start_col);
+                        int scale = font_size;
+                        int *scaled_data = malloc(rows * cols * scale * scale * 3 * sizeof(int));
+                        for (int a = 0; a < rows; a++) {
+                            for (int b = 0; b < scale; b++) {
+                                for (int x = 0; x < cols; x++) {
+                                    for (int d = 0; d < scale; d++) {
+                                        for (int e = 0; e < 3; e++) {
+                                            scaled_data[((a*scale+b)*cols*scale + x*scale + d)*3 + e] = char_box_data[(a*cols + x)*3 + e];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        free(char_box_data);
+                        char_box_data = malloc(rows * cols * scale * scale * 3 * sizeof(int));
+                        memcpy(char_box_data, scaled_data, rows * cols * scale * scale * 3 * sizeof(int));
+
+                        start_col *= font_size;
+                        end_col *= font_size;
+                        font_txt_rows *= font_size;
+                        free(scaled_data);
+                    }
+
                     int cols = 0;
                     int start_position = (font_row * width + font_col) * 3;
                     if ((font_row + font_txt_rows - 1 <= height) && (font_col + (end_col - start_col) <= width)) {
                         for (int row = 0; row < font_txt_rows; row++) {
-                        cols = (end_col - start_col);
-                        for (int col = 0; col < cols; col++) {
-                            int r = char_box_data[(row * cols + col) * 3];
-                            int g = char_box_data[(row * cols + col) * 3 + 1];
-                            int b = char_box_data[(row * cols + col) * 3 + 2];
+                            cols = (end_col - start_col);
+                            for (int col = 0; col < cols; col++) {
+                                int r = char_box_data[(row * cols + col) * 3];
+                                int g = char_box_data[(row * cols + col) * 3 + 1];
+                                int b = char_box_data[(row * cols + col) * 3 + 2];
 
-                            if (r == 255 && g == 255 && b == 255 && (font_row + row) < height && (font_col + col) < width) {
-                                output_pixels[start_position + (row * width * 3) + (col * 3)] = r;
-                                output_pixels[start_position + (row * width * 3) + (col * 3) + 1] = g;
-                                output_pixels[start_position + (row * width * 3) + (col * 3) + 2] = b;
+                                if (r == 255 && g == 255 && b == 255 && (font_row + row) < height && (font_col + col) < width) {
+                                    output_pixels[start_position + (row * width * 3) + (col * 3)] = r;
+                                    output_pixels[start_position + (row * width * 3) + (col * 3) + 1] = g;
+                                    output_pixels[start_position + (row * width * 3) + (col * 3) + 2] = b;
+                                }
                             }
-                        }
-                    } 
-                    font_col += (cols + 1);
+                        } 
+                        font_col += (cols + 1);
                     }
 
                     free(char_box_data);
+                    font_txt_rows /= font_size;
                 }
                 else {
                     font_col += 5;
                 }
                 
             }
-            // ./a.out -i "desert.ppm" -o "output.ppm" -r "seawolfseawolfseawolfseawolfseawolfseawolf","font1.txt",1,100,150
-            // ./a.out -i "desert.ppm" -o "output.ppm" -r "hi","font1.txt",1,100,150
         }
 
         if (output_ppm_flag) {
