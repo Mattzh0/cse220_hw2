@@ -369,7 +369,7 @@ int main(int argc, char **argv) {
                         font_col += (cols + 1);
                     }
                     else {
-                        //free(char_box_data);
+                        free(char_box_data);
                         break;
                     }
                     free(char_box_data);
