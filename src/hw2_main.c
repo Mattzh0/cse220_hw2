@@ -232,8 +232,6 @@ int main(int argc, char **argv) {
             int font_txt_cols= 0;
             char ch;
 
-            printf("%s ", font_path);
-
             while ((ch = fgetc(font_file)) != EOF) {
                 if (ch == '\n') {
                     font_txt_rows++;
@@ -379,7 +377,6 @@ int main(int argc, char **argv) {
                 else {
                     font_col += 5;
                 }
-                
             }
             fclose(font_file);
         }
