@@ -326,18 +326,19 @@ int main(int argc, char **argv) {
                         int cols = (end_col - start_col);
                         int scale = font_size;
                         int *scaled_data = malloc(rows * cols * scale * scale * 3 * sizeof(int));
-                        for (int a = 0; a < rows; a++) {
-                            for (int b = 0; b < scale; b++) {
-                                for (int x = 0; x < cols; x++) {
-                                    for (int d = 0; d < scale; d++) {
-                                        for (int e = 0; e < 3; e++) {
-                                            scaled_data[((a*scale+b)*cols*scale + x*scale + d)*3 + e] = char_box_data[(a*cols + x)*3 + e];
-                                        }
-                                    }
-                                }
+
+                        for (int x = 0; x < rows * cols * 3; x++) {
+                            int row = x / (cols * 3);
+                            int col = (x % (cols * 3)) / 3;
+                            int color = x % 3;
+
+                            for (int y = 0; y < scale * scale; y++) {
+                                int new_row = row * scale + y / scale;
+                                int new_col = col * scale + y % scale;
+
+                                scaled_data[(new_row * cols * scale + new_col) * 3 + color] = char_box_data[x];
                             }
                         }
-
                         free(char_box_data);
                         char_box_data = malloc(rows * cols * scale * scale * 3 * sizeof(int));
                         memcpy(char_box_data, scaled_data, rows * cols * scale * scale * 3 * sizeof(int));
@@ -568,6 +569,7 @@ int main(int argc, char **argv) {
                 starting_indices[i] = 0;
             }
             int current_index = 1;
+
             for (int col = 1; col < font_txt_cols; col++) {
                 int whitespace_col = 0;
                 for (int row = 0; row < font_txt_rows; row++) {
@@ -628,15 +630,17 @@ int main(int argc, char **argv) {
                         int cols = (end_col - start_col);
                         int scale = font_size;
                         int *scaled_data = malloc(rows * cols * scale * scale * 3 * sizeof(int));
-                        for (int a = 0; a < rows; a++) {
-                            for (int b = 0; b < scale; b++) {
-                                for (int x = 0; x < cols; x++) {
-                                    for (int d = 0; d < scale; d++) {
-                                        for (int e = 0; e < 3; e++) {
-                                            scaled_data[((a*scale+b)*cols*scale + x*scale + d)*3 + e] = char_box_data[(a*cols + x)*3 + e];
-                                        }
-                                    }
-                                }
+
+                        for (int x = 0; x < rows * cols * 3; x++) {
+                            int row = x / (cols * 3);
+                            int col = (x % (cols * 3)) / 3;
+                            int color = x % 3;
+
+                            for (int y = 0; y < scale * scale; y++) {
+                                int new_row = row * scale + y / scale;
+                                int new_col = col * scale + y % scale;
+
+                                scaled_data[(new_row * cols * scale + new_col) * 3 + color] = char_box_data[x];
                             }
                         }
                         free(char_box_data);
@@ -757,7 +761,7 @@ int main(int argc, char **argv) {
     }
     fclose(input_file);
     fclose(output_file);
-
+    
     return 0;
 }
 
