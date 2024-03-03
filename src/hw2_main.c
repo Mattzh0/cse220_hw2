@@ -204,7 +204,6 @@ int main(int argc, char **argv) {
 
         int *output_pixels = malloc(width * height * 3 * sizeof(int));
         memcpy(output_pixels, pixels, width * height * 3 * sizeof(int));
-
         if (cflag && pflag) {
             for (int i = 0; i < copy_height; i++) {
                 for (int j = 0; j < copy_width; j++) {
