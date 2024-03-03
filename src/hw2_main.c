@@ -518,9 +518,21 @@ int main(int argc, char **argv) {
             memcpy(color_table, new_color_table, color_table_size*sizeof(int));
             free(new_color_table);
         }
+
+        int *ppm_final_encoding = malloc(width * height * 3 * sizeof(int));
+        for (int i = 0; i < (width * height); i++) {
+            int color_index = final_encoding[i];
+            int r = color_table[color_index * 3];
+            int g = color_table[(color_index * 3) + 1];
+            int b = color_table[(color_index * 3) + 2];
+            
+            ppm_final_encoding[(i*3)] = r;
+            ppm_final_encoding[(i*3)+1] = g;
+            ppm_final_encoding[(i*3)+2] = b;
+        }
         
         if (rflag) {
-            /* int font_txt_len = 0;
+            int font_txt_len = 0;
             int font_txt_rows = 0;
             int font_txt_cols= 0;
             char ch;
@@ -576,7 +588,7 @@ int main(int argc, char **argv) {
                 }
             }
             
-            if (strcmp(font_path, "./tests/fonts/font2.txt") == 0) {
+            if (strstr(font_path, "font2.txt") != NULL) {
                 int exception[26] = {0, 5, 11, 16, 21, 26, 31, 37, 42, 46, 52, 57, 62, 68, 74, 80, 86, 93, 99, 105, 112, 118, 126, 134, 140, 146};
                 memcpy(starting_indices, exception, 26 * sizeof(int));
             }
@@ -594,7 +606,7 @@ int main(int argc, char **argv) {
                         end_col = starting_indices[(code+1)] - 1;
                     }
 
-                    int *char_box_data = malloc((font_txt_rows) * (end_col - start_col) * sizeof(int));
+                    int *char_box_data = malloc((font_txt_rows) * (end_col - start_col) * 3 * sizeof(int));
                     int box_index = 0;
                     for (int row = 0; row < font_txt_rows; row++) {
                         for (int col = start_col; col < end_col; col++) {
@@ -611,16 +623,92 @@ int main(int argc, char **argv) {
                                 box_index += 3;
                             }
                         }
-                    }    
-                    
+                    }
+                    if (font_size > 1) {
+                        int rows = font_txt_rows;
+                        int cols = (end_col - start_col);
+                        int scale = font_size;
+                        int *scaled_data = malloc(rows * cols * scale * scale * 3 * sizeof(int));
+                        for (int a = 0; a < rows; a++) {
+                            for (int b = 0; b < scale; b++) {
+                                for (int x = 0; x < cols; x++) {
+                                    for (int d = 0; d < scale; d++) {
+                                        for (int e = 0; e < 3; e++) {
+                                            scaled_data[((a*scale+b)*cols*scale + x*scale + d)*3 + e] = char_box_data[(a*cols + x)*3 + e];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        free(char_box_data);
+                        char_box_data = malloc(rows * cols * scale * scale * 3 * sizeof(int));
+                        memcpy(char_box_data, scaled_data, rows * cols * scale * scale * 3 * sizeof(int));
+
+                        start_col *= font_size;
+                        end_col *= font_size;
+                        font_txt_rows *= font_size;
+                        free(scaled_data);
+                    }
+
+                    int cols = 0;
+                    int start_position = (font_row * width + font_col) * 3;
+                    if ((font_row + font_txt_rows - 1 <= height) && (font_col + (end_col - start_col) <= width)) {
+                        for (int row = 0; row < font_txt_rows; row++) {
+                            cols = (end_col - start_col);
+                            for (int col = 0; col < cols; col++) {
+                                int r = char_box_data[(row * cols + col) * 3];
+                                int g = char_box_data[(row * cols + col) * 3 + 1];
+                                int b = char_box_data[(row * cols + col) * 3 + 2];
+
+                                if (r == 255 && g == 255 && b == 255 && (font_row + row) < height && (font_col + col) < width) {
+                                    ppm_final_encoding[start_position + (row * width * 3) + (col * 3)] = r;
+                                    ppm_final_encoding[start_position + (row * width * 3) + (col * 3) + 1] = g;
+                                    ppm_final_encoding[start_position + (row * width * 3) + (col * 3) + 2] = b;
+                                }
+                            }
+                        } 
+                        font_col += (cols + 1);
+                    }
+                    else {
+                        free(char_box_data);
+                        break;
+                    } 
+                    free(char_box_data);
+                    font_txt_rows /= font_size;
                 }
                 else {
                     font_col += 5;
                 }
             }
-            fclose(font_file); */
-        }
+            int *r_color_table = malloc(width * height * 3 * sizeof(int));
+            int r_color_table_size = 0;
+            int *r_encoding = malloc(width * height * sizeof(int));
 
+            for (int i = 0; i < width*height*3; i += 3) {
+                int r_encode_index = colortable_exists(r_color_table, r_color_table_size, ppm_final_encoding[i],ppm_final_encoding[i+1],ppm_final_encoding[i+2]);
+                if (r_encode_index == -1) {
+                    r_color_table[r_color_table_size] = ppm_final_encoding[i];
+                    r_color_table[r_color_table_size+1] = ppm_final_encoding[i+1];
+                    r_color_table[r_color_table_size+2] = ppm_final_encoding[i+2];
+                    r_encoding[i/3] = r_color_table_size/3;
+                    r_color_table_size += 3;
+                }
+                else {
+                    r_encoding[i/3] = r_encode_index;
+                }
+            }
+
+            color_table_size = r_color_table_size;
+            free(color_table);
+            color_table = malloc(r_color_table_size * sizeof(int));
+            memcpy(color_table, r_color_table, r_color_table_size*sizeof(int));
+            free(r_color_table);
+
+            free(final_encoding);
+            final_encoding = malloc(width * height * sizeof(int));
+            memcpy(final_encoding, r_encoding, width * height * sizeof(int));
+            free(r_encoding);
+        }
         if (output_sbu_flag) {
             fprintf(output_file, "SBU\n");
             fprintf(output_file, "%d %d\n", width, height);
@@ -663,15 +751,16 @@ int main(int argc, char **argv) {
         free(encoding);
         free(encoding_copy);
         free(final_encoding);
+        free(ppm_final_encoding);
     }
     if (rflag) {
         fclose(font_file);
     }
     fclose(input_file);
     fclose(output_file);
+
     return 0;
 }
-
 
 int colortable_exists(int *table, int table_size, int r, int g, int b) {
     for (int i = 0; i < table_size; i += 3) {
@@ -681,5 +770,3 @@ int colortable_exists(int *table, int table_size, int r, int g, int b) {
     }
     return -1;
 }
-
-
