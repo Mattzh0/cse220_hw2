@@ -568,7 +568,6 @@ int main(int argc, char **argv) {
                 starting_indices[i] = 0;
             }
             int current_index = 1;
-
             for (int col = 1; col < font_txt_cols; col++) {
                 int whitespace_col = 0;
                 for (int row = 0; row < font_txt_rows; row++) {
