@@ -10,7 +10,6 @@
 #include <unistd.h> 
 
 int colortable_exists(int *table, int table_size, int r, int g, int b);
-void run_length_encoding(int *non_run_encoding);
 
 int main(int argc, char **argv) {
     extern int optind, opterr, optopt;
@@ -393,28 +392,41 @@ int main(int argc, char **argv) {
             int color_table_size = 0;
             int *encoding = malloc((pixels_size/3) * sizeof(int));
 
-            int last_r = -1, last_g = -1, last_b = -1, last_index = -1;
+            int ***cache = malloc(256 * sizeof(int **));
+            for(int i = 0; i < 256; i++) {
+                cache[i] = malloc(256 * sizeof(int *));
+                for(int j = 0; j < 256; j++) {
+                    cache[i][j] = malloc(256 * sizeof(int));
+                    for(int k = 0; k < 256; k++) {
+                        cache[i][j][k] = -1;
+                    }
+                }
+            }
 
             for (int i = 0; i < pixels_size; i += 3) {
                 int r = output_pixels[i], g = output_pixels[i+1], b = output_pixels[i+2];
-                int encode_index;
+                int encode_index = cache[r][g][b];
+                if (encode_index == -1) {
+                    cache[r][g][b] = color_table_size/3;
 
-                if (r == last_r && g == last_g && b == last_b) {
-                    encode_index = last_index;
-                } 
-                else {
-                    encode_index = colortable_exists(color_table, color_table_size, r, g, b);
-                    if (encode_index == -1) {
-                        color_table[color_table_size] = r;
-                        color_table[color_table_size+1] = g;
-                        color_table[color_table_size+2] = b;
-                        encode_index = color_table_size/3;
-                        color_table_size += 3;
-                    }
-                    last_r = r; last_g = g; last_b = b; last_index = encode_index;
+                    color_table[color_table_size] = r;
+                    color_table[color_table_size+1] = g;
+                    color_table[color_table_size+2] = b;
+                    encoding[i/3] = color_table_size/3;
+                    color_table_size += 3;
                 }
-                encoding[i/3] = encode_index;
+                else {
+                    encoding[i/3] = encode_index;
+                }
             }
+
+            for(int i = 0; i < 256; i++) {
+                for(int j = 0; j < 256; j++) {
+                    free(cache[i][j]);
+                }
+                free(cache[i]);
+            }
+            free(cache);
 
             fprintf(output_file, "SBU\n");
             fprintf(output_file, "%d %d\n", width, height);
@@ -500,7 +512,17 @@ int main(int argc, char **argv) {
             int *new_color_table = malloc(width * height * 3 * sizeof(int));
             free(final_encoding);
             final_encoding = malloc(width * height * sizeof(int));
-            int last_r = -1, last_g = -1, last_b = -1, last_index = -1;
+
+            int ***cache = malloc(256 * sizeof(int **));
+            for(int i = 0; i < 256; i++) {
+                cache[i] = malloc(256 * sizeof(int *));
+                for(int j = 0; j < 256; j++) {
+                    cache[i][j] = malloc(256 * sizeof(int));
+                    for(int k = 0; k < 256; k++) {
+                        cache[i][j][k] = -1;
+                    }
+                }
+            }
 
             for (int i = 0; i < width * height; i++) {
                 int color_index = encoding_copy[i];
@@ -508,26 +530,29 @@ int main(int argc, char **argv) {
                 int g = color_table[(color_index * 3) + 1];
                 int b = color_table[(color_index * 3) + 2];
 
-                int encode_index;
+                int encode_index = cache[r][g][b];
+                if (encode_index == -1) {
+                    cache[r][g][b] = new_color_table_size/3;
 
-                if (r == last_r && g == last_g && b == last_b) {
-                    encode_index = last_index;
-                } else {
-                    encode_index = colortable_exists(new_color_table, new_color_table_size, r, g, b);
-                    if (encode_index == -1) {
-                        new_color_table[new_color_table_size] = r;
-                        new_color_table[(new_color_table_size) + 1] = g;
-                        new_color_table[(new_color_table_size) + 2] = b;
-                        encode_index = new_color_table_size/3;
-                        new_color_table_size += 3;
-                    }
-                    last_r = r; last_g = g; last_b = b; last_index = encode_index;
+                    new_color_table[new_color_table_size] = r;
+                    new_color_table[(new_color_table_size) + 1] = g;
+                    new_color_table[(new_color_table_size) + 2] = b;
+                    final_encoding[i] = new_color_table_size/3;
+                    new_color_table_size += 3;
                 }
-                final_encoding[i] = encode_index;
+                else {
+                    final_encoding[i] = encode_index;
+                }
             }
 
-            
-            printf("%d ", new_color_table_size);
+            for(int i = 0; i < 256; i++) {
+                for(int j = 0; j < 256; j++) {
+                    free(cache[i][j]);
+                }
+                free(cache[i]);
+            }
+            free(cache);
+
             color_table_size = new_color_table_size;
             free(color_table);
             color_table = malloc(color_table_size * sizeof(int));
@@ -702,27 +727,44 @@ int main(int argc, char **argv) {
             int r_color_table_size = 0;
             int *r_encoding = malloc(width * height * sizeof(int));
 
-            int last_r = -1, last_g = -1, last_b = -1, last_index = -1;
-
-            for (int i = 0; i < width*height*3; i += 3) {
-                int r = ppm_final_encoding[i], g = ppm_final_encoding[i+1], b = ppm_final_encoding[i+2];
-                int r_encode_index;
-
-                if (r == last_r && g == last_g && b == last_b) {
-                    r_encode_index = last_index;
-                } else {
-                    r_encode_index = colortable_exists(r_color_table, r_color_table_size, r, g, b);
-                    if (r_encode_index == -1) {
-                        r_color_table[r_color_table_size] = r;
-                        r_color_table[r_color_table_size+1] = g;
-                        r_color_table[r_color_table_size+2] = b;
-                        r_encode_index = r_color_table_size/3;
-                        r_color_table_size += 3;
+            int ***r_cache = malloc(256 * sizeof(int **));
+            for(int i = 0; i < 256; i++) {
+                r_cache[i] = malloc(256 * sizeof(int *));
+                for(int j = 0; j < 256; j++) {
+                    r_cache[i][j] = malloc(256 * sizeof(int));
+                    for(int k = 0; k < 256; k++) {
+                        r_cache[i][j][k] = -1;
                     }
-                    last_r = r; last_g = g; last_b = b; last_index = r_encode_index;
                 }
-                r_encoding[i/3] = r_encode_index;
             }
+
+            for (int i = 0; i < width * height * 3; i += 3) {
+                int r = ppm_final_encoding[i];
+                int g = ppm_final_encoding[i+1];
+                int b = ppm_final_encoding[i+2];
+
+                int r_encode_index = r_cache[r][g][b];
+                if (r_encode_index == -1) {
+                    r_cache[r][g][b] = r_color_table_size/3;
+
+                    r_color_table[r_color_table_size] = r;
+                    r_color_table[r_color_table_size + 1] = g;
+                    r_color_table[r_color_table_size + 2] = b;
+                    r_encoding[i/3] = r_color_table_size/3;
+                    r_color_table_size += 3;
+                }
+                else {
+                    r_encoding[i/3] = r_encode_index;
+                }
+            }
+            for(int i = 0; i < 256; i++) {
+                for(int j = 0; j < 256; j++) {
+                    free(r_cache[i][j]);
+                }
+                free(r_cache[i]);
+            }
+            free(r_cache);
+
             color_table_size = r_color_table_size;
             free(color_table);
             color_table = malloc(r_color_table_size * sizeof(int));
@@ -785,13 +827,4 @@ int main(int argc, char **argv) {
     fclose(output_file);
     
     return 0;
-}
-
-int colortable_exists(int *table, int table_size, int r, int g, int b) {
-    for (int i = 0; i < table_size; i += 3) {
-        if (table[i] == r && table[i+1] == g && table[i+2] == b) {
-            return i/3;
-        }
-    }
-    return -1;
 }
